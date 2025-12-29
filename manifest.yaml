@@ -54,7 +54,7 @@ resources:
   # The FSI Compliant Networking (VPC, Endpoints)
   - name: SaaS-Tenant-Networking
     description: Configures the VPC endpoints required for private Lambda-to-DynamoDB communication.
-    resource_file: templates/networking.yml
+    resource_file: templates/networking.yaml
     deploy_method: stack_set
     deployment_targets:
       organizational_units:
@@ -65,7 +65,7 @@ resources:
   # The Operational Monitoring (Alarms)
   - name: SaaS-Tenant-Monitoring
     description: Deploys standardized CloudWatch Alarms for Lambda errors and DB throttling.
-    resource_file: templates/monitoring.yml
+    resource_file: templates/monitoring.yaml
     deploy_method: stack_set
     deployment_targets:
       organizational_units:

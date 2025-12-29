@@ -49,7 +49,6 @@ resources:
         - Tenant
     regions:
       - ap-south-1
-      - us-east-1
 
   # The FSI Compliant Networking (VPC, Endpoints)
   - name: SaaS-Tenant-Networking

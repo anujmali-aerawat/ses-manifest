@@ -1,0 +1,6 @@
+[
+  {
+    "ParameterKey": "JwtSecret",
+    "ParameterValue": "some-secret"
+  }
+]

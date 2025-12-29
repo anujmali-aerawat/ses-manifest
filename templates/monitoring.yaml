@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "CT-003 Evidence: Tenant Monitoring. Standardized Alarms for Lambda and DynamoDB."
+
+Parameters:
+  OpsEmail:
+    Type: String
+    Description: Central operations email to notify upon critical failure.
+    Default: "ops-alerts@8peaks.com"
+
+Resources:
+  # ---------------------------------------------------------
+  # 1. Local Alert Topic
+  # ---------------------------------------------------------
+  TenantAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: "Critical-Tenant-Alerts"
+      Subscription:
+        - Endpoint: !Ref OpsEmail
+          Protocol: email
+
+  # ---------------------------------------------------------
+  # 2. Lambda Failure Alarm (SES Engine Health)
+  # ---------------------------------------------------------
+  EmailEngineFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "Critical-EmailEngine-LambdaErrors"
+      AlarmDescription: "Triggers if the SES CSV Processor fails to process contact lists."
+      Namespace: "AWS/Lambda"
+      MetricName: "Errors"
+      Dimensions:
+        - Name: FunctionName
+          Value: "CSVProcessorFunction" # Matches the function name in ses-email-engine.yml
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref TenantAlertTopic
+
+  # ---------------------------------------------------------
+  # 3. DynamoDB Throttling Alarm (Performance)
+  # ---------------------------------------------------------
+  DatabaseThrottlingAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: "Warning-DynamoDB-Throttled"
+      Namespace: "AWS/DynamoDB"
+      MetricName: "ReadThrottleEvents"
+      Dimensions:
+        - Name: TableName
+          Value: "CampaignStatsTable" # Matches the table name in ses-email-engine.yml
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref TenantAlertTopic

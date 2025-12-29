@@ -1,0 +1,26 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ProtectSESConfiguration",
+      "Effect": "Deny",
+      "Action": [
+        "ses:DeleteConfigurationSet",
+        "ses:DeleteConfigurationSetTrackingOptions",
+        "ses:DeleteIdentityPolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EnforceTLSOnEmailSending",
+      "Effect": "Deny",
+      "Action": "ses:SendEmail",
+      "Resource": "*",
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    }
+  ]
+}

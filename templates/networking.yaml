@@ -11,8 +11,15 @@ Resources:
       Tags:
         - Key: Name
           Value: Tenant-Isolated-VPC
-        - Key: Compliance
-          Value: FSI-Strict
+
+  # --- MISSING RESOURCE ADDED BELOW ---
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref TenantVPC
+      Tags:
+        - Key: Name
+          Value: Private-Route-Table
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -21,7 +28,13 @@ Resources:
       CidrBlock: 10.10.1.0/24
       AvailabilityZone: !Select [ 0, !GetAZs '' ]
 
-  # FSI Requirement: VPC Endpoints to keep traffic off public internet
+  # --- ASSOCIATION ADDED ---
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet1
+
   DynamoDBEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -29,4 +42,4 @@ Resources:
       ServiceName: !Sub "com.amazonaws.${AWS::Region}.dynamodb"
       VpcEndpointType: Gateway
       RouteTableIds:
-        - !Ref PrivateRouteTable
+        - !Ref PrivateRouteTable # This reference is now valid

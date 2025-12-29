@@ -42,7 +42,7 @@ resources:
   - name: SaaS-SES-Email-Engine
     description: Deploys the full Serverless Email Stack (S3, Lambda, DynamoDB, SES).
     resource_file: templates/ses.yaml
-    parameter_file: parameters/ses_params.json
+    parameter_file: parameters/ses.json
     deploy_method: stack_set
     deployment_targets:
       organizational_units:

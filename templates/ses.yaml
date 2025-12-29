@@ -128,13 +128,71 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: FullAccess
+        - PolicyName: EmailEngineLeastPrivilege
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
+              # DynamoDB Access: Scoped to specific tables and indexes
               - Effect: Allow
-                Action: ["dynamodb:*", "sqs:*", "ses:*", "s3:*", "sns:*", "logs:*"]
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                  - dynamodb:BatchWriteItem
+                Resource:
+                  - !GetAtt UsersTable.Arn
+                  - !GetAtt ContactsTable.Arn
+                  - !GetAtt ListsTable.Arn
+                  - !GetAtt TemplatesTable.Arn
+                  - !GetAtt CampaignsTable.Arn
+                  - !Sub "${UsersTable.Arn}/index/*"
+                  - !Sub "${ContactsTable.Arn}/index/*"
+                  - !Sub "${ListsTable.Arn}/index/*"
+                  - !Sub "${TemplatesTable.Arn}/index/*"
+                  - !Sub "${CampaignsTable.Arn}/index/*"
+              
+              # S3 Access: Scoped to the specific Upload Bucket
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !Ref UploadBucket
+                  - !Sub "${UploadBucket.Arn}/*"
+
+              # SQS Access: Scoped to the Email Queue
+              - Effect: Allow
+                Action:
+                  - sqs:SendMessage
+                  - sqs:ReceiveMessage
+                  - sqs:DeleteMessage
+                  - sqs:GetQueueAttributes
+                Resource: !GetAtt EmailQueue.Arn
+
+              # SNS Access: Scoped to the Tracking Topic
+              - Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: !Ref TrackingTopic
+
+              # SES Access: Allowed to send emails
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
                 Resource: "*"
+              
+              # CloudWatch Logs (Explicit)
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "arn:aws:logs:*:*:*"
+
 
   # ==================================================================================
   # 4. AUTH FUNCTION

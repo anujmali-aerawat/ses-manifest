@@ -1,0 +1,74 @@
+---
+region: ap-south-1
+version: 2021-03-15
+
+resources:
+  # =========================================================
+  # 1. SERVICE CONTROL POLICIES (SCPs) - The "Digital Perimeter"
+  # =========================================================
+  
+  # Enforces Data Residency (GDPR) and Audit Logging (SOC2)
+  - name: FSI-Guardrails-Core
+    description: Enforces strict FSI compliance (Deny non-compliant regions, Protect CloudTrail).
+    resource_file: policies/governance.json
+    deploy_method: scp
+    deployment_targets:
+      organizational_units:
+        - Tenant # Applied strictly to Banking Clients
+
+  # Protects the Pipeline Integrity
+  - name: Protect-Automation-Roles
+    description: Prevents deletion of the CfCT execution roles to ensure pipeline integrity.
+    resource_file: policies/protect_automation_roles.json
+    deploy_method: scp
+    deployment_targets:
+      organizational_units:
+        - Tenant
+
+  # Protects the SES Reputation Assets
+  - name: Protect-SES-Assets
+    description: Prevents deletion of SES Configuration Sets and Reputation metrics.
+    resource_file: policies/ses.json
+    deploy_method: scp
+    deployment_targets:
+      organizational_units:
+        - Tenant
+
+  # =========================================================
+  # 2. CLOUDFORMATION STACKSETS - The "Application Workload"
+  # =========================================================
+
+  # The Core Business Logic (S3, Lambda, DynamoDB, SES)
+  - name: SaaS-SES-Email-Engine
+    description: Deploys the full Serverless Email Stack (S3, Lambda, DynamoDB, SES).
+    resource_file: templates/ses.yaml
+    parameter_file: parameters/ses_params.json
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Tenant
+    regions:
+      - ap-south-1
+      - us-east-1
+
+  # The FSI Compliant Networking (VPC, Endpoints)
+  - name: SaaS-Tenant-Networking
+    description: Configures the VPC endpoints required for private Lambda-to-DynamoDB communication.
+    resource_file: templates/networking.yml
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Tenant
+    regions:
+      - ap-south-1
+
+  # The Operational Monitoring (Alarms)
+  - name: SaaS-Tenant-Monitoring
+    description: Deploys standardized CloudWatch Alarms for Lambda errors and DB throttling.
+    resource_file: templates/monitoring.yml
+    deploy_method: stack_set
+    deployment_targets:
+      organizational_units:
+        - Tenant
+    regions:
+      - ap-south-1
